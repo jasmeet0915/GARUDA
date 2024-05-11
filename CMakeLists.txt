@@ -15,6 +15,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Path to Garuda Include Directory
+set(GARUDA_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/garuda)
+
+# OpenCV & CUDA
+set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
+find_package(CUDA 12 REQUIRED)
+find_package(OpenCV REQUIRED)
+
+
 if(UNIX)
     # In Linux, for the plugin .so library, set `rpath` to "$ORIGIN" and do not set `runpath`, thus
     # enabling the lookup of the dependencies in the plugin dir first.
@@ -57,6 +66,17 @@ target_link_libraries(nx_sdk PRIVATE nx_kit)
 target_compile_definitions(nx_sdk PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO}) #< for nxLibContext()
 
 #--------------------------------------------------------------------------------------------------
+# Object Detector Library, depends on opencv and cuda.
+
+set(OBJECT_DETECTOR_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/garuda/object_detection)
+file(GLOB_RECURSE OBJECT_DETECTOR_SRC CONFIGURE_DEPENDS
+    ${OBJECT_DETECTOR_SRC_DIR}/*)
+
+add_library(object_detector SHARED ${OBJECT_DETECTOR_SRC})
+target_include_directories(object_detector PRIVATE ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(object_detector ${OpenCV_LIBS})
+
+#--------------------------------------------------------------------------------------------------
 # Define wildlife_detection_geolocation_plugin lib, dynamic, depends on nx_kit and nx_sdk.
 
 set(WILDLIFE_DETECTION_GEOL_SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src/garuda/vms_server_plugins/analytics/wildlife_detection_geolocation_plugin)
@@ -65,9 +85,10 @@ file(GLOB_RECURSE WILDLIFE_DETECTION_GEOL_SRC CONFIGURE_DEPENDS
 set(WILDLIFE_DETECTION_GEOL_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/garuda/vms_server_plugins/analytics)
 
 add_library(wildlife_detection_geolocation_plugin SHARED ${WILDLIFE_DETECTION_GEOL_SRC})
-target_include_directories(wildlife_detection_geolocation_plugin PRIVATE ${WILDLIFE_DETECTION_GEOL_INCLUDE_DIR})
-target_link_libraries(wildlife_detection_geolocation_plugin PRIVATE nx_kit nx_sdk)
+add_dependencies(wildlife_detection_geolocation_plugin object_detector)
+target_include_directories(wildlife_detection_geolocation_plugin PRIVATE ${WILDLIFE_DETECTION_GEOL_INCLUDE_DIR} 
+                            ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(wildlife_detection_geolocation_plugin PRIVATE nx_kit nx_sdk object_detector)
 
 target_compile_definitions(wildlife_detection_geolocation_plugin
-    PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO}
-)
+    PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO})
