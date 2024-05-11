@@ -1,6 +1,6 @@
-#include "wildlife_detection_geolocation_plugin/engine.h"
+#include "wildlife_detection_geolocation_plugin/Engine.h"
 
-#include "wildlife_detection_geolocation_plugin/device_agent.h"
+#include "wildlife_detection_geolocation_plugin/DeviceAgent.h"
 
 namespace garuda {
 namespace vms_server_plugins {

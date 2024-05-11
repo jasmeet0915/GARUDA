@@ -3,7 +3,8 @@
 #include <nx/sdk/analytics/helpers/consuming_device_agent.h>
 #include <nx/sdk/helpers/uuid_helper.h>
 
-#include "wildlife_detection_geolocation_plugin/engine.h"
+#include "wildlife_detection_geolocation_plugin/Engine.h"
+#include "object_detection/ObjectDetector.h"
 
 namespace garuda {
 namespace vms_server_plugins {
@@ -36,6 +37,9 @@ private:
 private:
     const std::string kHelloWorldObjectType = "nx.sample.helloWorld";
     const std::string kNewTrackEventType = "nx.sample.newTrack";
+
+    // Create object_detector instance
+    object_detection::ObjectDetector object_detector;
 
     /** Lenght of the the track (in frames). The value was chosen arbitrarily. */
     static constexpr int kTrackFrameCount = 256;

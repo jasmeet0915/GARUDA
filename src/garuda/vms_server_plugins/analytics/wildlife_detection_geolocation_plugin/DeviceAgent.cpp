@@ -1,4 +1,4 @@
-#include "wildlife_detection_geolocation_plugin/device_agent.h"
+#include "wildlife_detection_geolocation_plugin/DeviceAgent.h"
 
 #include <chrono>
 
