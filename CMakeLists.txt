@@ -74,7 +74,9 @@ file(GLOB_RECURSE OBJECT_DETECTOR_SRC CONFIGURE_DEPENDS
 
 add_library(object_detector SHARED ${OBJECT_DETECTOR_SRC})
 target_include_directories(object_detector PRIVATE ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(object_detector ${OpenCV_LIBS})
+target_link_libraries(object_detector nx_kit nx_sdk ${OpenCV_LIBS})
+target_compile_definitions(object_detector
+    PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO})
 
 #--------------------------------------------------------------------------------------------------
 # Define wildlife_detection_geolocation_plugin lib, dynamic, depends on nx_kit and nx_sdk.

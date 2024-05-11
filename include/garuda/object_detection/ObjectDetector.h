@@ -10,6 +10,8 @@
 #include <opencv2/dnn.hpp>
 
 #include <utilities/DetectionInfo.h>
+#include <nx/sdk/analytics/rect.h>
+
 
 using namespace garuda::utilities;
 
@@ -20,8 +22,11 @@ namespace garuda
     class ObjectDetector
     {
       public:
-        ObjectDetector(const std::string &onnxModelPath, const cv::Size &modelInputShape = {640, 640},
+        ObjectDetector(const std::string &onnxModelPath = "", const cv::Size &modelInputShape = {640, 640},
           const std::string &classesTxtFile = "", const bool &runWithCuda = true);
+
+        void setModelPath(std::string modelPath);
+        
         std::vector<DetectionInfo> runDetection(const cv::Mat &input);
 
       private:

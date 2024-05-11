@@ -10,8 +10,9 @@ namespace wildlife_detection_geolocation_plugin {
 using namespace nx::sdk;
 using namespace nx::sdk::analytics;
 
-Engine::Engine():
+Engine::Engine(std::filesystem::path _pluginHomeDir):
     // Call the DeviceAgent helper class constructor telling it to verbosely report to stderr.
+    pluginHomeDir(_pluginHomeDir),
     nx::sdk::analytics::Engine(/*enableOutput*/ true)
 {
 }
@@ -31,7 +32,7 @@ Engine::~Engine()
  */
 void Engine::doObtainDeviceAgent(Result<IDeviceAgent*>* outResult, const IDeviceInfo* deviceInfo)
 {
-    *outResult = new DeviceAgent(deviceInfo);
+    *outResult = new DeviceAgent(deviceInfo, pluginHomeDir);
 }
 
 /**

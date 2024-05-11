@@ -6,6 +6,7 @@
 #include <nx/sdk/analytics/helpers/event_metadata_packet.h>
 #include <nx/sdk/analytics/helpers/object_metadata.h>
 #include <nx/sdk/analytics/helpers/object_metadata_packet.h>
+#include <nx/sdk/ptr.h>
 
 namespace garuda {
 namespace vms_server_plugins {
@@ -19,10 +20,13 @@ using namespace nx::sdk::analytics;
  * @param deviceInfo Various information about the related device, such as its id, vendor, model,
  *     etc.
  */
-DeviceAgent::DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo):
+DeviceAgent::DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo,
+    std::filesystem::path _pluginHomeDir):
     // Call the DeviceAgent helper class constructor telling it to verbosely report to stderr.
+    pluginHomeDir(_pluginHomeDir),
     ConsumingDeviceAgent(deviceInfo, /*enableOutput*/ true)
 {
+    objectDetector->setModelPath(pluginHomeDir.generic_string());
 }
 
 DeviceAgent::~DeviceAgent()
@@ -63,14 +67,27 @@ std::string DeviceAgent::manifestString() const
  */
 bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* videoFrame)
 {
+    // Increase the frame count
     ++m_frameIndex;
     m_lastVideoFrameTimestampUs = videoFrame->timestampUs();
+
+    // If the frame count is not divisble by the objectDetectionPeriod return true
+    if (m_frameIndex % objectDetectionPeriod != 0)
+    {
+        return true;
+    }
 
     auto eventMetadataPacket = generateEventMetadataPacket();
     if (eventMetadataPacket)
     {
-        // Send generated metadata packet to the Server.
-        pushMetadataPacket(eventMetadataPacket.releasePtr());
+        // Create a FrameAdapter instance with the video frame to get the cv Mat instance
+        frameAdapter.frameToCvImg(videoFrame);
+        frameDetectionInfo = objectDetector->runDetection(frameAdapter.cvImg);
+        detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
+            m_lastVideoFrameTimestampUs);
+
+        detectionMetadataPacket->addRef();
+        pushMetadataPacket(detectionMetadataPacket.releasePtr());
     }
 
     return true; //< There were no errors while processing the video frame.
@@ -88,8 +105,6 @@ bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* vide
  */
 bool DeviceAgent::pullMetadataPackets(std::vector<IMetadataPacket*>* metadataPackets)
 {
-    metadataPackets->push_back(generateObjectMetadataPacket().releasePtr());
-
     return true; //< There were no errors while filling metadataPackets.
 }
 
@@ -132,32 +147,34 @@ Ptr<IMetadataPacket> DeviceAgent::generateEventMetadataPacket()
     return eventMetadataPacket;
 }
 
-Ptr<IMetadataPacket> DeviceAgent::generateObjectMetadataPacket()
+Ptr<ObjectMetadataPacket> DeviceAgent::detectionsToObjectMetadataPacket(
+    std::vector<utilities::DetectionInfo>& detections,
+    int64_t timestampUs)
 {
-    // ObjectMetadataPacket contains arbitrary number of ObjectMetadata.
+    if (detections.empty())
+        return nullptr;
+
     const auto objectMetadataPacket = makePtr<ObjectMetadataPacket>();
 
-    // Bind the object metadata to the last video frame using a timestamp.
-    objectMetadataPacket->setTimestampUs(m_lastVideoFrameTimestampUs);
-    objectMetadataPacket->setDurationUs(0);
+    for (const auto& detection: detections)
+    {
+        const auto objectMetadata = makePtr<ObjectMetadata>();
 
-    // ObjectMetadata contains information about an object on the frame.
-    const auto objectMetadata = makePtr<ObjectMetadata>();
-    // Set all required fields.
-    objectMetadata->setTypeId(kHelloWorldObjectType);
-    objectMetadata->setTrackId(m_trackId);
+        objectMetadata->setBoundingBox(detection.boundingBox);
+        objectMetadata->setConfidence(detection.confidence);
 
-    // Calculate bounding box coordinates each frame so that it moves from the top left corner
-    // to the bottom right corner during kTrackFrameCount frames.
-    static constexpr float d = 0.5F / kTrackFrameCount;
-    static constexpr float width = 0.5F;
-    static constexpr float height = 0.5F;
-    const int frameIndexInsideTrack = m_frameIndex % kTrackFrameCount;
-    const float x = d * frameIndexInsideTrack;
-    const float y = d * frameIndexInsideTrack;
-    objectMetadata->setBoundingBox(Rect(x, y, width, height));
+        // Convert class label to object metadata type id.
+        if (detection.className == "person")
+            objectMetadata->setTypeId(kPersonObjectType);
+        else if (detection.className == "cat")
+            objectMetadata->setTypeId(kCatObjectType);
+        else if (detection.className == "dog")
+            objectMetadata->setTypeId(kDogObjectType);
+        // There is no "else", because only the detections with those types are generated.
 
-    objectMetadataPacket->addItem(objectMetadata.get());
+        objectMetadataPacket->addItem(objectMetadata.get());
+    }
+    objectMetadataPacket->setTimestampUs(timestampUs);
 
     return objectMetadataPacket;
 }

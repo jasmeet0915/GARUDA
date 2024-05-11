@@ -6,13 +6,18 @@ using namespace garuda::utilities;
 ObjectDetector::ObjectDetector(const std::string &onnxModelPath, const cv::Size &modelInputShape,
     const std::string &classesTxtFile, const bool &runWithCuda)
 {
-    modelPath = onnxModelPath;
-    modelShape = modelInputShape;
-    classesPath = classesTxtFile;
-    cudaEnabled = runWithCuda;
+    this->modelPath = onnxModelPath;
+    this->modelShape = modelInputShape;
+    this->classesPath = classesTxtFile;
+    this->cudaEnabled = runWithCuda;
 
-    loadOnnxNetwork();
+    this->loadOnnxNetwork();
     // loadClassesFromFile(); The classes are hard-coded for this example
+}
+
+void ObjectDetector::setModelPath(std::string modelPath)
+{
+    this->modelPath = modelPath;
 }
 
 std::vector<DetectionInfo> ObjectDetector::runDetection(const cv::Mat &input)
@@ -129,19 +134,17 @@ std::vector<DetectionInfo> ObjectDetector::runDetection(const cv::Mat &input)
     {
         int idx = nms_result[i];
 
+        // Set the class id, class name and confidence of the detection
         DetectionInfo result;
-        result.class_id = class_ids[idx];
+        result.classId = class_ids[idx];
         result.confidence = confidences[idx];
+        result.className = classes[result.classId];
 
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dis(100, 255);
-        result.color = cv::Scalar(dis(gen),
-                                  dis(gen),
-                                  dis(gen));
-
-        result.className = classes[result.class_id];
-        result.box = boxes[idx];
+        // Set the bounding box of the detected object
+        float bottomLeftX = boxes[idx].x + boxes[idx].width;
+        float bottomLeftY = boxes[idx].y + boxes[idx].height;
+        result.boundingBox = nx::sdk::analytics::Rect(bottomLeftX, bottomLeftY,
+            boxes[idx].width, boxes[idx].height);
 
         detections.push_back(result);
     }

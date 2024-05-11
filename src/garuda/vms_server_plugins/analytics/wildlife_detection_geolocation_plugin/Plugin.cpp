@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "wildlife_detection_geolocation_plugin/Plugin.h"
 
 #include "wildlife_detection_geolocation_plugin/Engine.h"
@@ -12,7 +14,9 @@ using namespace nx::sdk::analytics;
 
 Result<IEngine*> Plugin::doObtainEngine()
 {
-    return new Engine();
+    const auto utilityProvider = this->utilityProvider();
+    const std::filesystem::path pluginHomeDir = utilityProvider->homeDir();
+    return new Engine(pluginHomeDir);
 }
 
 /**

@@ -1,4 +1,8 @@
+#pragma once
+
 #include <string>
+
+#include <nx/sdk/analytics/rect.h>
 
 namespace garuda
 {
@@ -6,11 +10,10 @@ namespace garuda
   {
     struct DetectionInfo
     {
-        int class_id{0};
-        std::string className{};
-        float confidence{0.0};
-        cv::Scalar color{};
-        cv::Rect box{};
+      int classId{0};
+      std::string className{};
+      float confidence{0.0};
+      nx::sdk::analytics::Rect boundingBox;
     };
   }
 }
