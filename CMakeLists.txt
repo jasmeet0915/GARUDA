@@ -17,6 +17,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Path to Garuda Include Directory
 set(GARUDA_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/garuda)
+set(MEDIA_SERVER_PLUGIN_DIR /opt/networkoptix-metavms/mediaserver/bin/plugins)
 
 # OpenCV & CUDA
 set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
@@ -75,8 +76,6 @@ file(GLOB_RECURSE OBJECT_DETECTOR_SRC CONFIGURE_DEPENDS
 add_library(object_detector SHARED ${OBJECT_DETECTOR_SRC})
 target_include_directories(object_detector PRIVATE ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(object_detector nx_kit nx_sdk ${OpenCV_LIBS})
-target_compile_definitions(object_detector
-    PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO})
 
 #--------------------------------------------------------------------------------------------------
 # Define wildlife_detection_geolocation_plugin lib, dynamic, depends on nx_kit and nx_sdk.
@@ -86,11 +85,24 @@ file(GLOB_RECURSE WILDLIFE_DETECTION_GEOL_SRC CONFIGURE_DEPENDS
     ${WILDLIFE_DETECTION_GEOL_SRC_DIR}/*)
 set(WILDLIFE_DETECTION_GEOL_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/garuda/vms_server_plugins/analytics)
 
-add_library(wildlife_detection_geolocation_plugin SHARED ${WILDLIFE_DETECTION_GEOL_SRC})
+add_library(wildlife_detection_geolocation_plugin SHARED ${WILDLIFE_DETECTION_GEOL_SRC} ${OBJECT_DETECTOR_SRC})
 add_dependencies(wildlife_detection_geolocation_plugin object_detector)
 target_include_directories(wildlife_detection_geolocation_plugin PRIVATE ${WILDLIFE_DETECTION_GEOL_INCLUDE_DIR} 
                             ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
-target_link_libraries(wildlife_detection_geolocation_plugin PRIVATE nx_kit nx_sdk object_detector)
+target_link_libraries(wildlife_detection_geolocation_plugin PRIVATE nx_kit nx_sdk ${OpenCV_LIBS})
 
 target_compile_definitions(wildlife_detection_geolocation_plugin
     PRIVATE NX_PLUGIN_API=${API_EXPORT_MACRO})
+
+#--------------------------------------------------------------------------------------------------
+# Executable to test object detection with sample image, depends on opencv and cuda.
+
+add_executable(test_object_detection ${WILDLIFE_DETECTION_GEOL_SRC_DIR}/test_object_detection.cpp ${OBJECT_DETECTOR_SRC})
+target_include_directories(test_object_detection PRIVATE ${WILDLIFE_DETECTION_GEOL_INCLUDE_DIR} 
+    ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(test_object_detection PRIVATE nx_kit nx_sdk ${OpenCV_LIBS})
+
+
+# Install the final built plugin library to /opt/networkoptix-metavms/mediaserver/plugins
+install(TARGETS wildlife_detection_geolocation_plugin
+        DESTINATION ${MEDIA_SERVER_PLUGIN_DIR})
