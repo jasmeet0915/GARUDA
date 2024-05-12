@@ -8,6 +8,10 @@
 #include <nx/sdk/analytics/helpers/object_metadata_packet.h>
 #include <nx/sdk/ptr.h>
 
+#define NX_DEBUG_ENABLE_OUTPUT true
+
+#include <nx/kit/debug.h>
+
 namespace garuda {
 namespace vms_server_plugins {
 namespace analytics {
@@ -26,7 +30,18 @@ DeviceAgent::DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo,
     pluginHomeDir(_pluginHomeDir),
     ConsumingDeviceAgent(deviceInfo, /*enableOutput*/ true)
 {
-    objectDetector->setModelPath(pluginHomeDir.generic_string());
+    pluginHomeDir = std::filesystem::path("/home/singh/projects/NetworkOptixHackathon/Garuda/models");
+    NX_PRINT << "PLUGIN HOME DIR: " << pluginHomeDir;
+    std::string modelPath = (pluginHomeDir / std::filesystem::path("yolov8n.onnx")).generic_string();
+    NX_PRINT << "[WILDLIFE DETECTION] Loading Object Detection model from: " << modelPath;
+
+    objectDetector = std::make_unique<object_detection::ObjectDetector>();
+    objectDetector->setModelPath(modelPath);
+    NX_PRINT << "Created ObjectDetector instance for running object detection on every " <<
+        objectDetectionPeriod << "th frame";
+
+    // Load the object detection model from the file
+    objectDetector->loadOnnxNetwork();
 }
 
 DeviceAgent::~DeviceAgent()
@@ -72,22 +87,21 @@ bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* vide
     m_lastVideoFrameTimestampUs = videoFrame->timestampUs();
 
     // If the frame count is not divisble by the objectDetectionPeriod return true
-    if (m_frameIndex % objectDetectionPeriod != 0)
+    if (m_frameIndex % objectDetectionPeriod == 0)
     {
-        return true;
-    }
+        NX_OUTPUT << "Running Object Detection for frame index: " << m_frameIndex;
+        auto eventMetadataPacket = generateEventMetadataPacket();
+        if (eventMetadataPacket)
+        {
+            // // Create a FrameAdapter instance with the video frame to get the cv Mat instance
+            // frameAdapter.frameToCvImg(videoFrame);
+            // frameDetectionInfo = objectDetector->runDetection(frameAdapter.cvImg);
+            // detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
+            //     m_lastVideoFrameTimestampUs);
 
-    auto eventMetadataPacket = generateEventMetadataPacket();
-    if (eventMetadataPacket)
-    {
-        // Create a FrameAdapter instance with the video frame to get the cv Mat instance
-        frameAdapter.frameToCvImg(videoFrame);
-        frameDetectionInfo = objectDetector->runDetection(frameAdapter.cvImg);
-        detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
-            m_lastVideoFrameTimestampUs);
-
-        detectionMetadataPacket->addRef();
-        pushMetadataPacket(detectionMetadataPacket.releasePtr());
+            // detectionMetadataPacket->addRef();
+            // pushMetadataPacket(detectionMetadataPacket.releasePtr());
+        }
     }
 
     return true; //< There were no errors while processing the video frame.
