@@ -11,7 +11,6 @@ ObjectDetector::ObjectDetector(const std::string &onnxModelPath, const cv::Size 
     this->classesPath = classesTxtFile;
     this->cudaEnabled = runWithCuda;
 
-    this->loadOnnxNetwork();
     // loadClassesFromFile(); The classes are hard-coded for this example
 }
 
@@ -30,8 +29,11 @@ std::vector<DetectionInfo> ObjectDetector::runDetection(const cv::Mat &input)
     cv::dnn::blobFromImage(modelInput, blob, 1.0/255.0, modelShape, cv::Scalar(), true, false);
     net.setInput(blob);
 
+    std::cout << "Created Blob from Input image: " << blob.size << std::endl;
+
     std::vector<cv::Mat> outputs;
     net.forward(outputs, net.getUnconnectedOutLayersNames());
+
 
     int rows = outputs[0].size[1];
     int dimensions = outputs[0].size[2];
