@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 {
     std::unique_ptr<object_detection::ObjectDetector> object_detector =
         std::make_unique<object_detection::ObjectDetector>();
-    
+
     std::filesystem::path model_home_dir = std::filesystem::path("/home/singh/projects/NetworkOptixHackathon/Garuda/models");
     std::string modelPath = (model_home_dir / std::filesystem::path("yolov8s.onnx")).generic_string();
     std::cout << "Loading path from " << modelPath << std::endl;
@@ -25,6 +25,11 @@ int main(int argc, char** argv)
     cv::Mat test_image = cv::imread("/home/singh/projects/NetworkOptixHackathon/Garuda/resources/bus.jpg");
 
     std::vector<utilities::DetectionInfo> detection_results = object_detector->runDetection(test_image);
-
+    for (auto& detection : detection_results)
+    {
+        std::cout << "Class ID is: " << detection.classId << std::endl;
+        std::cout << "Class Name is: " << detection.className << std::endl;
+        std::cout << "Confidence is: " << detection.confidence << std::endl;
+    }
     return 0;
 }

@@ -18,12 +18,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Path to Garuda Include Directory
 set(GARUDA_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/include/garuda)
 set(MEDIA_SERVER_PLUGIN_DIR /opt/networkoptix-metavms/mediaserver/bin/plugins)
+set(CMAKE_PREFIX_PATH /opt/networkoptix-metavms/mediaserver/lib/cmake)
 
 # OpenCV & CUDA
 set(CUDA_TOOLKIT_ROOT_DIR "/usr/local/cuda")
 find_package(CUDA 12 REQUIRED)
 find_package(OpenCV REQUIRED)
-
 
 if(UNIX)
     # In Linux, for the plugin .so library, set `rpath` to "$ORIGIN" and do not set `runpath`, thus
@@ -101,7 +101,6 @@ add_executable(test_object_detection ${WILDLIFE_DETECTION_GEOL_SRC_DIR}/test_obj
 target_include_directories(test_object_detection PRIVATE ${WILDLIFE_DETECTION_GEOL_INCLUDE_DIR} 
     ${GARUDA_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(test_object_detection PRIVATE nx_kit nx_sdk ${OpenCV_LIBS})
-
 
 # Install the final built plugin library to /opt/networkoptix-metavms/mediaserver/plugins
 install(TARGETS wildlife_detection_geolocation_plugin

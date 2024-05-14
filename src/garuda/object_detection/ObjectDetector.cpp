@@ -34,6 +34,7 @@ std::vector<DetectionInfo> ObjectDetector::runDetection(const cv::Mat &input)
     std::vector<cv::Mat> outputs;
     net.forward(outputs, net.getUnconnectedOutLayersNames());
 
+    std::cout << "Ran Detections" << std::endl;
 
     int rows = outputs[0].size[1];
     int dimensions = outputs[0].size[2];
