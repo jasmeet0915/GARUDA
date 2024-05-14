@@ -48,7 +48,7 @@ std::string Engine::manifestString() const
     // resources for decoding, thus it is the recommended format.
     return /*suppress newline*/ 1 + (const char*) R"json(
 {
-    "capabilities": "needUncompressedVideoFrames_yuv420"
+    "capabilities": "needUncompressedVideoFrames_bgr"
 }
 )json";
 }
