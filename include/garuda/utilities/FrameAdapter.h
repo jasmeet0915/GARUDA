@@ -26,7 +26,7 @@ namespace garuda
       void frameToCvImg(const nx::sdk::analytics::IUncompressedVideoFrame* frame)
       {
         width = frame->width();
-        height = frame->width();
+        height = frame->height();
         timestampUs = frame->timestampUs();
         cvImg = cv::Mat(height, width, CV_8UC3,
           (void*) frame->data(0), (size_t) frame->lineSize(0));
