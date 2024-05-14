@@ -33,9 +33,6 @@ protected:
     virtual bool pushUncompressedVideoFrame(
         const nx::sdk::analytics::IUncompressedVideoFrame* videoFrame) override;
 
-    virtual bool pullMetadataPackets(
-        std::vector<nx::sdk::analytics::IMetadataPacket*>* metadataPackets) override;
-
     virtual void doSetNeededMetadataTypes(
         nx::sdk::Result<void>* outValue,
         const nx::sdk::analytics::IMetadataTypes* neededMetadataTypes) override;
@@ -45,11 +42,9 @@ private:
     Ptr<ObjectMetadataPacket> detectionsToObjectMetadataPacket(
         std::vector<utilities::DetectionInfo>& detections,
         int64_t timestampUs);
+    nx::sdk::Uuid trackIdByTrackIndex(int trackIndex);
 
 private:
-    const std::string kHelloWorldObjectType = "nx.sample.helloWorld";
-    const std::string kNewTrackEventType = "nx.sample.newTrack";
-
     std::filesystem::path pluginHomeDir;
 
     // Create object_detector instance
@@ -58,19 +53,35 @@ private:
     /** Lenght of the the track (in frames). The value was chosen arbitrarily. */
     static constexpr int kTrackFrameCount = 256;
 
-private:
     nx::sdk::Uuid m_trackId = nx::sdk::UuidHelper::randomUuid();
     int m_frameIndex = 0; /**< Used for generating the detection in the right place. */
     int m_trackIndex = 0; /**< Used in the description of the events. */
     int objectDetectionPeriod = 5;
+    bool m_terminated = false;
 
     std::vector<utilities::DetectionInfo> frameDetectionInfo;
+    std::vector<nx::sdk::Uuid> m_trackIds;
     utilities::FrameAdapter frameAdapter;
     Ptr<ObjectMetadataPacket> detectionMetadataPacket; 
 
-    const std::string kPersonObjectType = "nx.base.Person";
+    // Supported types for object detection
+    const std::string kBirdObjectType = "nx.base.Bird";
     const std::string kCatObjectType = "nx.base.Cat";
     const std::string kDogObjectType = "nx.base.Dog";
+    const std::string kHorseObjectType = "nx.base.Horse";
+    const std::string kSheepObjectType = "nx.base.Sheep";
+    const std::string kCowObjectType = "nx.base.Cow";
+    const std::string kElephantObjectType = "nx.base.Elephant";
+    const std::string kBearObjectType = "nx.base.Bear";
+    const std::string kZebraObjectType = "nx.base.Zebra";
+    const std::string kGiraffeObjectType = "nx.base.Giraffe";
+
+    // Supported event types
+    const std::string kDetectionEventType = "sample.opencv_object_detection.detection";
+    const std::string kDetectionEventCaptionSuffix = " detected";
+    const std::string kDetectionEventDescriptionSuffix = " detected";
+    const std::string kProlongedDetectionEventType =
+        "sample.opencv_object_detection.prolongedDetection";
 
     /** Used for binding object and event metadata to the particular video frame. */
     int64_t m_lastVideoFrameTimestampUs = 0;

@@ -63,14 +63,51 @@ std::string DeviceAgent::manifestString() const
 {
     "eventTypes": [
         {
-            "id": ")json" + kNewTrackEventType + R"json(",
-            "name": "New track started"
+            "id": ")json" + kDetectionEventType + R"json(",
+            "name": "Object detected"
+        },
+        {
+            "id": ")json" + kProlongedDetectionEventType + R"json(",
+            "name": "Object detected (prolonged)",
+            "flags": "stateDependent"
         }
     ],
     "objectTypes": [
         {
-            "id": ")json" + kHelloWorldObjectType + R"json(",
-            "name": "Hello, World!"
+            "id": ")json" + kElephantObjectType + R"json(",
+            "name": "Elephant"
+        }
+    ],
+    "supportedTypes": [
+        {
+            "objectTypeId": ")json" + kBirdObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kCatObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kDogObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kHorseObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kSheepObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kCowObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kElephantObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kBearObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kZebraObjectType + R"json("
+        },
+        {
+            "objectTypeId": ")json" + kGiraffeObjectType + R"json("
         }
     ]
 }
@@ -89,37 +126,29 @@ bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* vide
     // If the frame count is not divisble by the objectDetectionPeriod return true
     if (m_frameIndex % objectDetectionPeriod == 0)
     {
-        NX_OUTPUT << "Running Object Detection for frame index: " << m_frameIndex;
-        auto eventMetadataPacket = generateEventMetadataPacket();
-        if (eventMetadataPacket)
-        {
-            // // Create a FrameAdapter instance with the video frame to get the cv Mat instance
-            // frameAdapter.frameToCvImg(videoFrame);
-            // frameDetectionInfo = objectDetector->runDetection(frameAdapter.cvImg);
-            // detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
-            //     m_lastVideoFrameTimestampUs);
+        // Clear previous frame and detection info
+        frameAdapter = {};
+        frameDetectionInfo.clear();
+        m_trackIds.clear();
 
-            // detectionMetadataPacket->addRef();
-            // pushMetadataPacket(detectionMetadataPacket.releasePtr());
-        }
+        NX_OUTPUT << "Running Object Detection for frame index: " << m_frameIndex;
+
+        // Create a FrameAdapter instance with the video frame to get the cv Mat instance
+        frameAdapter.frameToCvImg(videoFrame);
+        NX_OUTPUT << "Converted frame to cv::Mat";
+
+        frameDetectionInfo = objectDetector->runDetection(frameAdapter.cvImg);
+        NX_OUTPUT << "Ran Detections and detected: " << frameDetectionInfo.size() << " objects";
+
+        detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
+            m_lastVideoFrameTimestampUs);
+        NX_OUTPUT << "Converted DetectionInfo to ObjectMetadata";
+
+        detectionMetadataPacket->addRef();
+        pushMetadataPacket(detectionMetadataPacket.releasePtr());
     }
 
     return true; //< There were no errors while processing the video frame.
-}
-
-/**
- * Serves the similar purpose as pushMetadataPacket(). The differences are:
- * - pushMetadataPacket() is called by the plugin, while pullMetadataPackets() is called by Server.
- * - pushMetadataPacket() expects one metadata packet, while pullMetadataPacket expects the
- *     std::vector of them.
- *
- * There are no strict rules for deciding which method is "better". A rule of thumb is to use
- * pushMetadataPacket() when you generate one metadata packet and do not want to store it in the
- * class field, and use pullMetadataPackets otherwise.
- */
-bool DeviceAgent::pullMetadataPackets(std::vector<IMetadataPacket*>* metadataPackets)
-{
-    return true; //< There were no errors while filling metadataPackets.
 }
 
 void DeviceAgent::doSetNeededMetadataTypes(
@@ -139,24 +168,24 @@ Ptr<IMetadataPacket> DeviceAgent::generateEventMetadataPacket()
 
     // EventMetadataPacket contains arbitrary number of EventMetadata.
     const auto eventMetadataPacket = makePtr<EventMetadataPacket>();
-    // Bind event metadata packet to the last video frame using a timestamp.
-    eventMetadataPacket->setTimestampUs(m_lastVideoFrameTimestampUs);
-    // Zero duration means that the event is not sustained, but momental.
-    eventMetadataPacket->setDurationUs(0);
+    // // Bind event metadata packet to the last video frame using a timestamp.
+    // eventMetadataPacket->setTimestampUs(m_lastVideoFrameTimestampUs);
+    // // Zero duration means that the event is not sustained, but momental.
+    // eventMetadataPacket->setDurationUs(0);
 
-    // EventMetadata contains an information about event.
-    const auto eventMetadata = makePtr<EventMetadata>();
-    // Set all required fields.
-    eventMetadata->setTypeId(kNewTrackEventType);
-    eventMetadata->setIsActive(true);
-    eventMetadata->setCaption("New sample plugin track started");
-    eventMetadata->setDescription("New track #" + std::to_string(m_trackIndex) + " started");
+    // // EventMetadata contains an information about event.
+    // const auto eventMetadata = makePtr<EventMetadata>();
+    // // Set all required fields.
+    // eventMetadata->setTypeId(kNewTrackEventType);
+    // eventMetadata->setIsActive(true);
+    // eventMetadata->setCaption("New sample plugin track started");
+    // eventMetadata->setDescription("New track #" + std::to_string(m_trackIndex) + " started");
 
-    eventMetadataPacket->addItem(eventMetadata.get());
+    // eventMetadataPacket->addItem(eventMetadata.get());
 
-    // Generate index and track id for the next track.
-    ++m_trackIndex;
-    m_trackId = nx::sdk::UuidHelper::randomUuid();
+    // // Generate index and track id for the next track.
+    // ++m_trackIndex;
+    // m_trackId = nx::sdk::UuidHelper::randomUuid();
 
     return eventMetadataPacket;
 }
@@ -166,31 +195,64 @@ Ptr<ObjectMetadataPacket> DeviceAgent::detectionsToObjectMetadataPacket(
     int64_t timestampUs)
 {
     if (detections.empty())
+    {
+        NX_OUTPUT << "No Animals Detected";
         return nullptr;
+    }
+
+    NX_OUTPUT << "Converting detections to object metadata";
 
     const auto objectMetadataPacket = makePtr<ObjectMetadataPacket>();
 
+    int objectCounter = 0;
     for (const auto& detection: detections)
     {
         const auto objectMetadata = makePtr<ObjectMetadata>();
+
+        NX_OUTPUT << "Detected: " << detection.className << "with Confidence: " << detection.confidence;
 
         objectMetadata->setBoundingBox(detection.boundingBox);
         objectMetadata->setConfidence(detection.confidence);
 
         // Convert class label to object metadata type id.
-        if (detection.className == "person")
-            objectMetadata->setTypeId(kPersonObjectType);
+        if (detection.className == "bird")
+            objectMetadata->setTypeId(kBirdObjectType);
         else if (detection.className == "cat")
             objectMetadata->setTypeId(kCatObjectType);
         else if (detection.className == "dog")
             objectMetadata->setTypeId(kDogObjectType);
+        else if (detection.className == "horse")
+            objectMetadata->setTypeId(kHorseObjectType);
+        else if (detection.className == "sheep")
+            objectMetadata->setTypeId(kSheepObjectType);
+        else if (detection.className == "cow")
+            objectMetadata->setTypeId(kCowObjectType);
+        else if (detection.className == "elephant")
+            objectMetadata->setTypeId(kElephantObjectType);
+        else if (detection.className == "bear")
+            objectMetadata->setTypeId(kBearObjectType);
+        else if (detection.className == "zebra")
+            objectMetadata->setTypeId(kZebraObjectType);
+        else if (detection.className == "giraffe")
+            objectMetadata->setTypeId(kGiraffeObjectType);
         // There is no "else", because only the detections with those types are generated.
+
+        objectCounter++;
+        objectMetadata->setTrackId(trackIdByTrackIndex(objectCounter));
 
         objectMetadataPacket->addItem(objectMetadata.get());
     }
     objectMetadataPacket->setTimestampUs(timestampUs);
 
     return objectMetadataPacket;
+}
+
+Uuid DeviceAgent::trackIdByTrackIndex(int trackIndex)
+{
+    while (trackIndex >= m_trackIds.size())
+        m_trackIds.push_back(UuidHelper::randomUuid());
+
+    return m_trackIds[trackIndex];
 }
 
 } // namespace sample
