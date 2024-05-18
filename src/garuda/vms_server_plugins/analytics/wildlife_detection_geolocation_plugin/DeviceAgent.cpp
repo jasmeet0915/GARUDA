@@ -32,7 +32,7 @@ DeviceAgent::DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo,
 {
     pluginHomeDir = std::filesystem::path("/home/singh/projects/NetworkOptixHackathon/Garuda/models");
     NX_PRINT << "PLUGIN HOME DIR: " << pluginHomeDir;
-    std::string modelPath = (pluginHomeDir / std::filesystem::path("yolov8s.onnx")).generic_string();
+    std::string modelPath = (pluginHomeDir / std::filesystem::path("yolov8n.onnx")).generic_string();
     NX_PRINT << "[WILDLIFE DETECTION] Loading Object Detection model from: " << modelPath;
 
     objectDetector = std::make_unique<object_detection::ObjectDetector>();
@@ -74,40 +74,44 @@ std::string DeviceAgent::manifestString() const
     ],
     "objectTypes": [
         {
+            "id": ")json" + kBirdObjectType + R"json(",
+            "name": "Bird"
+        },
+        {
+            "id": ")json" + kCatObjectType + R"json(",
+            "name": "Cat"
+        },
+        {
+            "id": ")json" + kDogObjectType + R"json(",
+            "name": "Dog"
+        },
+        {
+            "id": ")json" + kHorseObjectType + R"json(",
+            "name": "Horse"
+        },
+        {
+            "id": ")json" + kSheepObjectType + R"json(",
+            "name": "Sheep"
+        },
+        {
+            "id": ")json" + kCowObjectType + R"json(",
+            "name": "Cow"
+        },
+        {
             "id": ")json" + kElephantObjectType + R"json(",
             "name": "Elephant"
-        }
-    ],
-    "supportedTypes": [
-        {
-            "objectTypeId": ")json" + kBirdObjectType + R"json("
         },
         {
-            "objectTypeId": ")json" + kCatObjectType + R"json("
+            "id": ")json" + kBearObjectType + R"json(",
+            "name": "Bear"
         },
         {
-            "objectTypeId": ")json" + kDogObjectType + R"json("
+            "id": ")json" + kZebraObjectType + R"json(",
+            "name": "Zebra"
         },
         {
-            "objectTypeId": ")json" + kHorseObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kSheepObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kCowObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kElephantObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kBearObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kZebraObjectType + R"json("
-        },
-        {
-            "objectTypeId": ")json" + kGiraffeObjectType + R"json("
+            "id": ")json" + kGiraffeObjectType + R"json(",
+            "name": "Giraffe"
         }
     ]
 }
@@ -143,6 +147,12 @@ bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* vide
         detectionMetadataPacket = detectionsToObjectMetadataPacket(frameDetectionInfo,
             m_lastVideoFrameTimestampUs);
         NX_OUTPUT << "Converted DetectionInfo to ObjectMetadata";
+
+        if (!detectionMetadataPacket)
+        {
+            NX_PRINT << "No animals detected";
+            return true;
+        }
 
         detectionMetadataPacket->addRef();
         pushMetadataPacket(detectionMetadataPacket.releasePtr());
@@ -209,10 +219,17 @@ Ptr<ObjectMetadataPacket> DeviceAgent::detectionsToObjectMetadataPacket(
     {
         const auto objectMetadata = makePtr<ObjectMetadata>();
 
-        NX_OUTPUT << "Detected: " << detection.className << "with Confidence: " << detection.confidence;
+        NX_OUTPUT << "Detected: " << detection.className << " with Confidence: " << detection.confidence;
 
         objectMetadata->setBoundingBox(detection.boundingBox);
         objectMetadata->setConfidence(detection.confidence);
+
+        // Reject detection if confidence is less than threshold
+        if (detection.confidence < confidenceThreshold)
+        {
+            NX_PRINT << "Rejected detection due to low confidence";
+            continue;
+        }
 
         // Convert class label to object metadata type id.
         if (detection.className == "bird")

@@ -56,8 +56,9 @@ private:
     nx::sdk::Uuid m_trackId = nx::sdk::UuidHelper::randomUuid();
     int m_frameIndex = 0; /**< Used for generating the detection in the right place. */
     int m_trackIndex = 0; /**< Used in the description of the events. */
-    int objectDetectionPeriod = 5;
+    int objectDetectionPeriod = 1;
     bool m_terminated = false;
+    float confidenceThreshold = 0.6;
 
     std::vector<utilities::DetectionInfo> frameDetectionInfo;
     std::vector<nx::sdk::Uuid> m_trackIds;
