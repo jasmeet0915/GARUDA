@@ -26,6 +26,11 @@ const zebraMarker = new L.Icon({
     iconSize: [80, 80],
 });
 
+const giraffeMarker = new L.Icon({
+    iconUrl: `${process.env.PUBLIC_URL}/giraffe.png`,
+    iconSize: [90, 90],
+});
+
 // Function to calculate the position on a circular path
 const calculatePosition = (centerX, centerY, radius, angle) => {
     const x = centerX + radius * Math.cos(angle);
@@ -45,7 +50,9 @@ const WildlifeMap = () => {
     const [dronePosition, setDronePosition] = useState([500, 900]); // Initial position of the drone
     const [animalStates, setAnimalStates] = useState([
         [[450, 850], 0, 0.0, 'elephant'], // Initial animals
-        [[550, 950], 0, 0.0, 'zebra']
+        [[550, 950], 0, 0.0, 'zebra'],
+        [[550, 700], 0, 0.0, 'giraffe'], // Giraffe on the left side
+        [[750, 850], 0, 0.0, 'cattle'] // Cattle at the top left
     ]); // Positions and states of the animals
     const [angle, setAngle] = useState(0); // Initial angle for circular path
     const requestRef = useRef();
@@ -64,15 +71,18 @@ const WildlifeMap = () => {
             const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.0)); // Initial animals do not move
 
             // Spawn animals based on drone's angle
-            if (newAngle > Math.PI / 4 && newAngle < Math.PI / 4 + 0.01 && animalStates.length < 4) {
-                updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'cattle']);
+            if (newAngle > Math.PI / 4 && newAngle < Math.PI / 4 + 0.01 && animalStates.length < 5) {
+                updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'elephant']);
             }
-            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 5) {
+            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 6) {
                 updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'zebra']);
+            }
+            if (newAngle > (3 * Math.PI) / 4 && newAngle < (3 * Math.PI) / 4 + 0.01 && animalStates.length < 7) {
+                updatedAnimalStates.push([calculatePosition(300, 850, 50, newAngle), 0, 0.1, 'giraffe']); // Extra giraffe on the left side
             }
 
             // Move one stationary animal after drone crosses a certain point
-            if (newAngle > Math.PI && newAngle < Math.PI + 0.01 && animalStates.length === 5) {
+            if (newAngle > Math.PI && newAngle < Math.PI + 0.01 && animalStates.length === 7) {
                 updatedAnimalStates[0] = moveAnimal(animalStates[0], 0.0005); // Move the first animal slightly
             }
 
@@ -101,7 +111,8 @@ const WildlifeMap = () => {
                 <Marker key={index} position={animal[0]} icon={
                     animal[3] === 'elephant' ? elephantMarker :
                         animal[3] === 'cattle' ? cattleMarker :
-                            zebraMarker
+                            animal[3] === 'zebra' ? zebraMarker :
+                                giraffeMarker
                 } />
             ))}
         </MapContainer>
