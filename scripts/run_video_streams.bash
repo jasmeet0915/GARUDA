@@ -52,6 +52,7 @@ tmux split-window -v
 
 # Start the virutal environment and Launch the Python scripts in each pane
 tmux send-keys -t 0 "ffmpeg -re -stream_loop -1 -i $VIDEO_PATH5 -c copy -f rtsp rtsp://localhost:8554/$VIDEO_NAME5" C-m
+tmux send-keys -t 1 "cd $PROJECT_MEDIA_PATH/../../nx-frontend-web && npm start" C-m
 
 # Attach to the tmux session
 tmux attach-session -t $SESSION_NAME
