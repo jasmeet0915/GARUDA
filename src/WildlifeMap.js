@@ -17,7 +17,7 @@ const elephantMarker = new L.Icon({
 });
 
 const cattleMarker = new L.Icon({
-    iconUrl: `${process.env.PUBLIC_URL}/cattle.webp`,
+    iconUrl: `${process.env.PUBLIC_URL}/cattle.png`,
     iconSize: [80, 80],
 });
 
@@ -53,7 +53,7 @@ const WildlifeMap = () => {
             setDronePosition(newDronePosition);
 
             // Update animal positions
-            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.1)); // Move animals very slowly
+            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.05)); // Move animals very slowly
 
             // Spawn animals based on drone's angle
             if (newAngle > 0 && newAngle < 0.01 && animalStates.length < 1) {
