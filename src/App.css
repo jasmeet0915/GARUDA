@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.rotated-map-container {
+  transform: rotate(270deg); /* Adjust the angle as needed */
+  transform-origin: center;
+  height: 100vh;
+  width: 100vw;
+}
