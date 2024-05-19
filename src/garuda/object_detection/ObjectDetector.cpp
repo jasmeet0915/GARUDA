@@ -143,11 +143,20 @@ std::vector<DetectionInfo> ObjectDetector::runDetection(const cv::Mat &input)
         result.confidence = confidences[idx];
         result.className = classes[result.classId];
 
-        // Set the bounding box of the detected object
-        float bottomLeftX = boxes[idx].x + boxes[idx].width;
-        float bottomLeftY = boxes[idx].y + boxes[idx].height;
-        result.boundingBox = nx::sdk::analytics::Rect(bottomLeftX, bottomLeftY,
-            boxes[idx].width, boxes[idx].height);
+        // Set the bounding box of the detected object after normalizing them with image width and height
+        float topLeftX = float(boxes[idx].x) / float(modelInput.cols);
+        float topLeftY = float(boxes[idx].y) / float(modelInput.rows);
+        float width = float(boxes[idx].width) / float(modelInput.cols);
+        float height = float(boxes[idx].height) / float(modelInput.rows);
+
+        std::cout << "Bounding Box Coords: " << boxes[idx].x << ", " << boxes[idx].y
+            << ", " << boxes[idx].width << ", " << boxes[idx].height << std::endl;
+        std::cout << "Image Size: " << modelInput.cols << ", " << modelInput.rows << std::endl;
+        std::cout << "Bounding Box Coords: " << topLeftX << ", " << topLeftY
+            << ", " << width << ", " << height << std::endl;
+
+        result.boundingBox = nx::sdk::analytics::Rect(topLeftX, topLeftY,
+            width, height);
 
         detections.push_back(result);
     }
