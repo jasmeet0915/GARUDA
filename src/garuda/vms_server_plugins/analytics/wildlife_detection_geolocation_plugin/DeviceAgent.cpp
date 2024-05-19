@@ -221,6 +221,16 @@ Ptr<ObjectMetadataPacket> DeviceAgent::detectionsToObjectMetadataPacket(
 
         NX_OUTPUT << "Detected: " << detection.className << " with Confidence: " << detection.confidence;
 
+        if (!detection.boundingBox.isValid())
+        {
+            NX_OUTPUT << "Object Detected but Bounding Box is invalid";
+            NX_OUTPUT << "Bounding Box is: " << detection.boundingBox.x << ", " << detection.boundingBox.y <<
+                ", " << detection.boundingBox.width << ", " << detection.boundingBox.height;
+            continue;
+        }
+        NX_OUTPUT << "Bounding Box is: " << detection.boundingBox.x << ", " << detection.boundingBox.y <<
+            ", " << detection.boundingBox.width << ", " << detection.boundingBox.height;
+
         objectMetadata->setBoundingBox(detection.boundingBox);
         objectMetadata->setConfidence(detection.confidence);
 

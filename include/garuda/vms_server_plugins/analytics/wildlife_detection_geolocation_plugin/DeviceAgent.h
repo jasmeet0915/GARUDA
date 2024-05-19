@@ -58,7 +58,7 @@ private:
     int m_trackIndex = 0; /**< Used in the description of the events. */
     int objectDetectionPeriod = 1;
     bool m_terminated = false;
-    float confidenceThreshold = 0.6;
+    float confidenceThreshold = 0.68;
 
     std::vector<utilities::DetectionInfo> frameDetectionInfo;
     std::vector<nx::sdk::Uuid> m_trackIds;
