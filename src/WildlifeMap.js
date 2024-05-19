@@ -8,16 +8,21 @@ const bounds = [[0, 0], [1000, 1800]];  // Adjust based on your image size and r
 
 const droneMarker = new L.Icon({
     iconUrl: `${process.env.PUBLIC_URL}/drone.png`,
-    iconSize: [80, 80],
+    iconSize: [120, 120],
 });
 
 const elephantMarker = new L.Icon({
     iconUrl: `${process.env.PUBLIC_URL}/elephant_icon.png`,
-    iconSize: [80, 80],
+    iconSize: [100, 100],
 });
 
 const cattleMarker = new L.Icon({
     iconUrl: `${process.env.PUBLIC_URL}/cattle.png`,
+    iconSize: [80, 80],
+});
+
+const zebraMarker = new L.Icon({
+    iconUrl: `${process.env.PUBLIC_URL}/zebra.png`,
     iconSize: [80, 80],
 });
 
@@ -38,14 +43,17 @@ const moveAnimal = (animal, speed) => {
 
 const WildlifeMap = () => {
     const [dronePosition, setDronePosition] = useState([500, 900]); // Initial position of the drone
-    const [animalStates, setAnimalStates] = useState([]); // Positions and states of the animals
+    const [animalStates, setAnimalStates] = useState([
+        [[450, 850], 0, 0.0, 'elephant'], // Initial animals
+        [[550, 950], 0, 0.0, 'zebra']
+    ]); // Positions and states of the animals
     const [angle, setAngle] = useState(0); // Initial angle for circular path
     const requestRef = useRef();
 
     useEffect(() => {
         const animate = () => {
             // Update the angle
-            const newAngle = (angle + 0.001) % (2 * Math.PI); // Slow circular movement
+            const newAngle = (angle + 0.005) % (2 * Math.PI); // Faster circular movement
             setAngle(newAngle);
 
             // Calculate new drone position
@@ -53,14 +61,19 @@ const WildlifeMap = () => {
             setDronePosition(newDronePosition);
 
             // Update animal positions
-            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.05)); // Move animals very slowly
+            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.0)); // Initial animals do not move
 
             // Spawn animals based on drone's angle
-            if (newAngle > 0 && newAngle < 0.01 && animalStates.length < 1) {
-                updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'elephant']);
-            }
-            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 2) {
+            if (newAngle > Math.PI / 4 && newAngle < Math.PI / 4 + 0.01 && animalStates.length < 4) {
                 updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'cattle']);
+            }
+            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 5) {
+                updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'zebra']);
+            }
+
+            // Move one stationary animal after drone crosses a certain point
+            if (newAngle > Math.PI && newAngle < Math.PI + 0.01 && animalStates.length === 5) {
+                updatedAnimalStates[0] = moveAnimal(animalStates[0], 0.0005); // Move the first animal slightly
             }
 
             setAnimalStates(updatedAnimalStates);
@@ -85,7 +98,11 @@ const WildlifeMap = () => {
             />
             <Marker position={dronePosition} icon={droneMarker} />
             {animalStates.map((animal, index) => (
-                <Marker key={index} position={animal[0]} icon={animal[3] === 'elephant' ? elephantMarker : cattleMarker} />
+                <Marker key={index} position={animal[0]} icon={
+                    animal[3] === 'elephant' ? elephantMarker :
+                        animal[3] === 'cattle' ? cattleMarker :
+                            zebraMarker
+                } />
             ))}
         </MapContainer>
     );
