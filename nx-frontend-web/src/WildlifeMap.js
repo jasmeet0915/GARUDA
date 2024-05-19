@@ -31,6 +31,16 @@ const giraffeMarker = new L.Icon({
     iconSize: [90, 90],
 });
 
+const cameraMarker = new L.Icon({
+    iconUrl: `${process.env.PUBLIC_URL}/camera.png`,
+    iconSize: [55, 55],
+});
+
+const poacherMarker = new L.Icon({
+    iconUrl: `${process.env.PUBLIC_URL}/poacher.png`,
+    iconSize: [55, 55],
+});
+
 // Function to calculate the position on a circular path
 const calculatePosition = (centerX, centerY, radius, angle) => {
     const x = centerX + radius * Math.cos(angle);
@@ -41,49 +51,53 @@ const calculatePosition = (centerX, centerY, radius, angle) => {
 // Function to move an animal in a slow random path
 const moveAnimal = (animal, speed) => {
     const [animalPos, animalAngle, animalSpeed, animalType] = animal;
-    const newAngle = animalAngle + (Math.random() - 0.5) * speed; // Adding small randomness to the movement
+    const newAngle = animalAngle + (Math.random() - 0.5) * speed;
     const [newX, newY] = [animalPos[0] + Math.cos(newAngle) * speed, animalPos[1] + Math.sin(newAngle) * speed];
     return [[newX, newY], newAngle, animalSpeed, animalType];
 };
 
 const WildlifeMap = () => {
-    const [dronePosition, setDronePosition] = useState([500, 900]); // Initial position of the drone
+    const [dronePosition, setDronePosition] = useState([500, 900]);
     const [animalStates, setAnimalStates] = useState([
-        [[450, 850], 0, 0.0, 'elephant'], // Initial animals
+        [[450, 850], 0, 0.0, 'elephant'],
         [[550, 950], 0, 0.0, 'zebra'],
-        [[550, 700], 0, 0.0, 'giraffe'], // Giraffe on the left side
-        [[750, 850], 0, 0.0, 'cattle'] // Cattle at the top left
-    ]); // Positions and states of the animals
-    const [angle, setAngle] = useState(0); // Initial angle for circular path
+        [[550, 700], 0, 0.0, 'giraffe']
+    ]);
+    const [angle, setAngle] = useState(0);
     const requestRef = useRef();
 
     useEffect(() => {
         const animate = () => {
             // Update the angle
-            const newAngle = (angle + 0.005) % (2 * Math.PI); // Faster circular movement
+            const newAngle = (angle + 0.001) % (2 * Math.PI);  // Reduced angle increment for slower speed
             setAngle(newAngle);
 
             // Calculate new drone position
-            const newDronePosition = calculatePosition(500, 900, 200, newAngle); // Center (500, 900), radius 200
+            const newDronePosition = calculatePosition(500, 900, 200, newAngle);
             setDronePosition(newDronePosition);
 
             // Update animal positions
-            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.0)); // Initial animals do not move
+            const updatedAnimalStates = animalStates.map(animal => moveAnimal(animal, 0.0));
 
             // Spawn animals based on drone's angle
-            if (newAngle > Math.PI / 4 && newAngle < Math.PI / 4 + 0.01 && animalStates.length < 5) {
+            if (newAngle > Math.PI / 4 && newAngle < Math.PI / 4 + 0.01 && animalStates.length < 4) {
                 updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'elephant']);
             }
-            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 6) {
+            if (newAngle > Math.PI / 2 && newAngle < Math.PI / 2 + 0.01 && animalStates.length < 5) {
                 updatedAnimalStates.push([calculatePosition(500, 900, 250, newAngle), 0, 0.1, 'zebra']);
             }
-            if (newAngle > (3 * Math.PI) / 4 && newAngle < (3 * Math.PI) / 4 + 0.01 && animalStates.length < 7) {
-                updatedAnimalStates.push([calculatePosition(300, 850, 50, newAngle), 0, 0.1, 'giraffe']); // Extra giraffe on the left side
+            if (newAngle > (3 * Math.PI) / 4 && newAngle < (3 * Math.PI) / 4 + 0.01 && animalStates.length < 6) {
+                updatedAnimalStates.push([calculatePosition(300, 850, 50, newAngle), 0, 0.1, 'giraffe']);
+            }
+            if (newAngle > (7 * Math.PI) / 4 && newAngle < (7 * Math.PI) / 4 + 0.01 && animalStates.length < 7) {
+                updatedAnimalStates.push([[760, 800], 0, 0.0, 'cattle']);
+            }
+            if (newAngle > (7 * Math.PI) / 4 && newAngle < (7 * Math.PI) / 4 + 0.01 && animalStates.length < 8) {
+                updatedAnimalStates.push([[750, 700], 0, 0.0, 'cattle']);
             }
 
-            // Move one stationary animal after drone crosses a certain point
-            if (newAngle > Math.PI && newAngle < Math.PI + 0.01 && animalStates.length === 7) {
-                updatedAnimalStates[0] = moveAnimal(animalStates[0], 0.0005); // Move the first animal slightly
+            if (newAngle > Math.PI && newAngle < Math.PI + 0.01 && animalStates.length === 8) {
+                updatedAnimalStates[0] = moveAnimal(animalStates[0], 0.0005);
             }
 
             setAnimalStates(updatedAnimalStates);
@@ -94,10 +108,16 @@ const WildlifeMap = () => {
         return () => cancelAnimationFrame(requestRef.current);
     }, [angle, animalStates]);
 
+    // Find the giraffe position to place the static drone to its right
+    const giraffeState = animalStates.find(animal => animal[3] === 'giraffe');
+    const staticDronePosition = giraffeState ? [giraffeState[0][0], giraffeState[0][1] + 70] : [0, 0];
+    const cameraPosition = giraffeState ? [giraffeState[0][0] + 70, giraffeState[0][1] - 160] : [0, 0];
+    const poacherPosition = giraffeState ? [giraffeState[0][0] + 30, giraffeState[0][1] - 220] : [0, 0];
+
     return (
         <MapContainer
             center={[500, 900]}
-            zoom={-2} // Set an appropriate default zoom level to fit the map in the viewport
+            zoom={-2}
             scrollWheelZoom={false}
             style={{ height: '100vh', width: '100vw' }}
             crs={L.CRS.Simple}
@@ -115,6 +135,9 @@ const WildlifeMap = () => {
                                 giraffeMarker
                 } />
             ))}
+            {giraffeState && <Marker position={staticDronePosition} icon={droneMarker} />}
+            {giraffeState && <Marker position={cameraPosition} icon={cameraMarker} />}
+            {giraffeState && <Marker position={poacherPosition} icon={poacherMarker} />}
         </MapContainer>
     );
 };
