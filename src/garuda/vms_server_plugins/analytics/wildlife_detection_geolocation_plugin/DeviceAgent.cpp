@@ -63,13 +63,8 @@ std::string DeviceAgent::manifestString() const
 {
     "eventTypes": [
         {
-            "id": ")json" + kDetectionEventType + R"json(",
-            "name": "Object detected"
-        },
-        {
-            "id": ")json" + kProlongedDetectionEventType + R"json(",
-            "name": "Object detected (prolonged)",
-            "flags": "stateDependent"
+            "id": ")json" + kPoacherDetectionEventType + R"json(",
+            "name": "Animal Poacher Detected"
         }
     ],
     "objectTypes": [
@@ -112,6 +107,10 @@ std::string DeviceAgent::manifestString() const
         {
             "id": ")json" + kGiraffeObjectType + R"json(",
             "name": "Giraffe"
+        },
+        {
+            "id": ")json" + kPersonObjectType + R"json(",
+            "name": "Person"
         }
     ]
 }
@@ -154,8 +153,26 @@ bool DeviceAgent::pushUncompressedVideoFrame(const IUncompressedVideoFrame* vide
             return true;
         }
 
-        detectionMetadataPacket->addRef();
-        pushMetadataPacket(detectionMetadataPacket.releasePtr());
+        eventMetadataPacket = generateEventMetadataPacket(frameDetectionInfo,
+            m_lastVideoFrameTimestampUs);
+        NX_OUTPUT << "Created Event Metadata Packet";
+
+        // Create the metadata packet list with detection and event metadata
+        MetadataPacketList resultMetadata;
+        if (detectionMetadataPacket)
+        {
+            resultMetadata.push_back(detectionMetadataPacket);
+        }
+        if (eventMetadataPacket)
+        {
+            resultMetadata.push_back(eventMetadataPacket);
+        }
+
+        for (const Ptr<IMetadataPacket>& metadataPacket: resultMetadata)
+        {
+            metadataPacket->addRef();
+            pushMetadataPacket(metadataPacket.get());
+        }
     }
 
     return true; //< There were no errors while processing the video frame.
@@ -170,32 +187,52 @@ void DeviceAgent::doSetNeededMetadataTypes(
 //-------------------------------------------------------------------------------------------------
 // private
 
-Ptr<IMetadataPacket> DeviceAgent::generateEventMetadataPacket()
+Ptr<IMetadataPacket> DeviceAgent::generateEventMetadataPacket(
+    std::vector<utilities::DetectionInfo>& detections,
+    int64_t timestampUs)
 {
-    // Generate event every kTrackFrameCount'th frame.
-    if (m_frameIndex % kTrackFrameCount != 0)
+    if (detections.empty())
+    {
+        NX_OUTPUT << "No Animals Detected";
         return nullptr;
+    }
 
     // EventMetadataPacket contains arbitrary number of EventMetadata.
     const auto eventMetadataPacket = makePtr<EventMetadataPacket>();
-    // // Bind event metadata packet to the last video frame using a timestamp.
-    // eventMetadataPacket->setTimestampUs(m_lastVideoFrameTimestampUs);
-    // // Zero duration means that the event is not sustained, but momental.
-    // eventMetadataPacket->setDurationUs(0);
+    // Bind event metadata packet to the last video frame using a timestamp.
+    eventMetadataPacket->setTimestampUs(timestampUs);
+    // Zero duration means that the event is not sustained, but momental.
+    eventMetadataPacket->setDurationUs(0);
 
-    // // EventMetadata contains an information about event.
-    // const auto eventMetadata = makePtr<EventMetadata>();
-    // // Set all required fields.
-    // eventMetadata->setTypeId(kNewTrackEventType);
-    // eventMetadata->setIsActive(true);
-    // eventMetadata->setCaption("New sample plugin track started");
-    // eventMetadata->setDescription("New track #" + std::to_string(m_trackIndex) + " started");
+    bool poacherDetected = false;
 
-    // eventMetadataPacket->addItem(eventMetadata.get());
+    for (auto& detection : detections)
+    {
+        if (detection.className != "person")
+        {
+            NX_OUTPUT << "No Poacher Detected";
+            continue;
+        }
+        // EventMetadata contains an information about event.
+        const auto eventMetadata = makePtr<EventMetadata>();
+        // Set all required fields.
+        eventMetadata->setTypeId(kPoacherDetectionEventType);
+        eventMetadata->setIsActive(true);
+        eventMetadata->setCaption("Animal Poacher Detected! Animals in Danger! Contact the Park Ranger");
+        eventMetadata->setDescription("Animal Poacher Detection Started");
 
-    // // Generate index and track id for the next track.
-    // ++m_trackIndex;
-    // m_trackId = nx::sdk::UuidHelper::randomUuid();
+        eventMetadataPacket->addItem(eventMetadata.get());
+        poacherDetected = true;
+        // Generate index and track id for the next track.
+        // ++m_trackIndex;
+        // m_trackId = nx::sdk::UuidHelper::randomUuid();
+    }
+
+    // If no poacher is detected, return nullptr
+    if (!poacherDetected)
+    {
+        return nullptr;
+    }
 
     return eventMetadataPacket;
 }

@@ -23,6 +23,8 @@ using namespace nx::sdk::analytics;
 class DeviceAgent: public nx::sdk::analytics::ConsumingDeviceAgent
 {
 public:
+    using MetadataPacketList = std::vector<nx::sdk::Ptr<nx::sdk::analytics::IMetadataPacket>>;
+public:
     DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo,
         std::filesystem::path _pluginHomeDir);
     virtual ~DeviceAgent() override;
@@ -38,8 +40,10 @@ protected:
         const nx::sdk::analytics::IMetadataTypes* neededMetadataTypes) override;
 
 private:
-    nx::sdk::Ptr<nx::sdk::analytics::IMetadataPacket> generateEventMetadataPacket();
     Ptr<ObjectMetadataPacket> detectionsToObjectMetadataPacket(
+        std::vector<utilities::DetectionInfo>& detections,
+        int64_t timestampUs);
+    Ptr<IMetadataPacket> generateEventMetadataPacket(
         std::vector<utilities::DetectionInfo>& detections,
         int64_t timestampUs);
     nx::sdk::Uuid trackIdByTrackIndex(int trackIndex);
@@ -64,6 +68,7 @@ private:
     std::vector<nx::sdk::Uuid> m_trackIds;
     utilities::FrameAdapter frameAdapter;
     Ptr<ObjectMetadataPacket> detectionMetadataPacket; 
+    Ptr<IMetadataPacket> eventMetadataPacket; 
 
     // Supported types for object detection
     const std::string kBirdObjectType = "nx.base.Bird";
@@ -76,9 +81,10 @@ private:
     const std::string kBearObjectType = "nx.base.Bear";
     const std::string kZebraObjectType = "nx.base.Zebra";
     const std::string kGiraffeObjectType = "nx.base.Giraffe";
+    const std::string kPersonObjectType = "nx.base.Person";
 
     // Supported event types
-    const std::string kDetectionEventType = "sample.opencv_object_detection.detection";
+    const std::string kPoacherDetectionEventType = "garuda.poaching_detection.alert";
     const std::string kDetectionEventCaptionSuffix = " detected";
     const std::string kDetectionEventDescriptionSuffix = " detected";
     const std::string kProlongedDetectionEventType =
