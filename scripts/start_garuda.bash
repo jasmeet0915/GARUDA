@@ -11,6 +11,10 @@ VIDEO_PATH4="$PROJECT_MEDIA_PATH/Elephant.mkv"
 VIDEO_NAME4="Elephant"
 VIDEO_PATH5="$PROJECT_MEDIA_PATH/Hunter.mp4"
 VIDEO_NAME5="Hunter"
+VIDEO_PATH6="$PROJECT_MEDIA_PATH/zebra.mp4"
+VIDEO_NAME6="Zebra"
+VIDEO_PATH7="$PROJECT_MEDIA_PATH/giraffe.mp4"
+VIDEO_NAME7="Giraffe"
 
 
 # Name of the tmux session
@@ -52,7 +56,10 @@ tmux split-window -v
 
 # Start the virutal environment and Launch the Python scripts in each pane
 tmux send-keys -t 0 "ffmpeg -re -stream_loop -1 -i $VIDEO_PATH5 -c copy -f rtsp rtsp://localhost:8554/$VIDEO_NAME5" C-m
-tmux send-keys -t 1 "cd $PROJECT_MEDIA_PATH/../../nx-frontend-web && npm start" C-m
+tmux send-keys -t 1 "ffmpeg -re -stream_loop -1 -i $VIDEO_PATH6 -c copy -f rtsp rtsp://localhost:8554/$VIDEO_NAME6" C-m
+tmux send-keys -t 2 "ffmpeg -re -stream_loop -1 -i $VIDEO_PATH7 -c copy -f rtsp rtsp://localhost:8554/$VIDEO_NAME7" C-m
+tmux send-keys -t 3 "cd $PROJECT_MEDIA_PATH/../../nx-frontend-web && npm start" C-m
+
 
 # Attach to the tmux session
 tmux attach-session -t $SESSION_NAME
