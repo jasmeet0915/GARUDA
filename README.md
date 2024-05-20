@@ -32,10 +32,10 @@ Future Enhancements:
 - Live Stream: Displays real-time footage from drones and cameras.
 - Notification Window: Alerts for poachers or other significant events appear here.
 
-1. For Tourists
+1. <b>For Tourists</b>
 - Finding Animals: Use the map to locate the last known position of the animals you are interested in. Click on the animal icons for more details.
 - Watching Live Feeds: Switch to the live stream window to watch real-time footage of animals in their natural habitat.
-2. For Rangers
+2. <b>For Rangers</b>
 - Monitoring Wildlife: Keep track of animal locations and movements using the map view which can be used in case of injured animals.
 - Poacher Alerts: Receive real-time notifications about potential poachers.
 
