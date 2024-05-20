@@ -16,6 +16,9 @@ GARUD relies on drones and cameras across the national park for camera streams. 
 
 The object metadata and event metadata are exposed to the Nx Server, which is finally shown on the Nx Desktop client.
 
+<img src="https://github.com/jasmeet0915/GARUDA/assets/12881364/f887b4f3-3a8a-4fc4-9e6e-32d4fe670fae" width=550px height=470px/>
+
+
 # Highlights for users
 Nx Desktop Client addresses challenges for three types of users: rangers, tourists, and researchers. It offers the following features:
 
