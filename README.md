@@ -16,7 +16,10 @@ GARUD relies on drones and cameras across the national park for camera streams. 
 
 The object metadata and event metadata are exposed to the Nx Server, which is finally shown on the Nx Desktop client.
 
-<img src="https://github.com/jasmeet0915/GARUDA/assets/12881364/f887b4f3-3a8a-4fc4-9e6e-32d4fe670fae" width=550px height=470px/>
+Nx Desktop client is also powered by a React frontend that displays a national park map showing the last known locations of different animals. Location data from cameras is sent to the server, which then updates the React frontend. The locations can be inferred using methods like triangulation.
+
+
+<img src="https://github.com/jasmeet0915/GARUDA/assets/12881364/cde3e271-f27a-4894-a8b6-cd7f85a52291" width=550px height=520px/>
 
 
 # Highlights for users
