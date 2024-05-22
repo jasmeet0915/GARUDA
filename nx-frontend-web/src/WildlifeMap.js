@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, ImageOverlay, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import './App.css'; // Import the CSS file
+import './App.css';
+import AnimalFetcher from "./fetcher/AnimalFetcher"; // Import the CSS file
 
 const bounds = [[0, 0], [1000, 1800]];  // Adjust based on your image size and requirements
 
