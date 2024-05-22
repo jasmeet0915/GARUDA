@@ -45,7 +45,16 @@ Future Enhancements:
 - Monitoring Wildlife: Keep track of animal locations and movements using the map view which can be used in case of injured animals.
 - Poacher Alerts: Receive real-time notifications about potential poachers.
 
-<Picture here>
+## Demo Screenshots
+
+![Screenshot from 2024-05-21 00-27-53](https://github.com/jasmeet0915/GARUDA/assets/23265149/66d56f11-c345-4cd1-886b-f968601d7529)
+
+![Screenshot from 2024-05-23 01-27-22](https://github.com/jasmeet0915/GARUDA/assets/23265149/41053cc2-04f4-40f2-8f2d-ab6c77a12ad9)
+
+![Screenshot from 2024-05-23 01-28-32](https://github.com/jasmeet0915/GARUDA/assets/23265149/d0598e31-aff4-489b-af12-641d372fa4f3)
+
+![Screenshot from 2024-05-23 01-29-40](https://github.com/jasmeet0915/GARUDA/assets/23265149/5e0f2c8a-db81-45e4-a2eb-21250481f6e4)
+
 
 # Technologies used
 1. Nx Meta Desktop Client
@@ -58,6 +67,39 @@ Future Enhancements:
 8. React Frontend
 
 # Build & Run
+The project relies on the source build of OpenCV version >= 4.7. Instructions for the same can be found [here](https://docs.opencv.org/4.x/d7/d9f/tutorial_linux_install.html).
+  > **Note:** Make sure to use flags: `WITH_ONNX`, `WITH_CUDA` while configuring the build with cmake and set the `CMAKE_INSTALL_PREFIX` to the install location of nx-meta mediaserver (it is generally `/opt/networkoptix-metavms/mediaserver`).
+    This would allow Nx Mediaserver to find OpenCV's shared libraries.
+After building & installing OpenCV, you can start building the projects with following instructions:
+* Clone the project:
+  ```bash
+  git clone https://github.com/jasmeet0915/GARUDA.git
+  ```
+* Navigate to the directory and create a build directory:
+  ```bash
+  cd GARUDA && mkdir build
+  ```
+* Configure the build using cmake:
+  ```bash
+  cmake -DmetadataSdkDir=$NX_METADATA_SDK -B ./build
+  ```
+  > **Note:** Here $NX_METADATA_SDK is an environment variable with the path where the metadata sdk is installed.
+* Finally build the project:
+  ```bash
+  sudo cmake --build ./build --target install --config Release -- -j
+  ```
+  This command will build the required plugin shared library and install it in the `/bin/plugins/` directory of the mediaserver automatically.
+ * After this, restart the mediaserver systemctl service:
+   ```bash
+   sudo systemctl restart networkoptix-metavms-mediaserver.service
+   ```
+ * Start the frontend and video streams by executing the provided script:
+   ```bash
+   cd GARUDA/scripts && ./start_garuda.bash
+   ```
+   > **Note:** This command would require videos to be installed in `resources/videos` path and the $PROJECT_MEDIA_PATH environment variable to be set. Update the names of the videos accordingly in the script.
+ * Start the NX Meta Desktop Client and enjoy!
 
 # Video
+[![Watch the video](https://img.youtube.com/vi/XK4F4SSR39w/maxresdefault.jpg)](https://youtu.be/XK4F4SSR39w)
 
