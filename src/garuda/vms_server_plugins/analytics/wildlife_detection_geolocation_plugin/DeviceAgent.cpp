@@ -30,9 +30,8 @@ DeviceAgent::DeviceAgent(const nx::sdk::IDeviceInfo* deviceInfo,
     pluginHomeDir(_pluginHomeDir),
     ConsumingDeviceAgent(deviceInfo, /*enableOutput*/ true)
 {
-    pluginHomeDir = std::filesystem::path("/home/singh/projects/NetworkOptixHackathon/Garuda/models");
     NX_PRINT << "PLUGIN HOME DIR: " << pluginHomeDir;
-    std::string modelPath = (pluginHomeDir / std::filesystem::path("yolov8n.onnx")).generic_string();
+    std::string modelPath = (pluginHomeDir / std::filesystem::path("yolov8n.onnx")).string();
     NX_PRINT << "[WILDLIFE DETECTION] Loading Object Detection model from: " << modelPath;
 
     objectDetector = std::make_unique<object_detection::ObjectDetector>();

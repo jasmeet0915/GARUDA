@@ -104,4 +104,6 @@ target_link_libraries(test_object_detection PRIVATE nx_kit nx_sdk ${OpenCV_LIBS}
 
 # Install the final built plugin library to /opt/networkoptix-metavms/mediaserver/plugins
 install(TARGETS wildlife_detection_geolocation_plugin
-        DESTINATION ${MEDIA_SERVER_PLUGIN_DIR})
+        DESTINATION ${MEDIA_SERVER_PLUGIN_DIR}/wildlife_detection_geolocation_plugin/)
+install(FILES models/yolov8n.onnx
+        DESTINATION ${MEDIA_SERVER_PLUGIN_DIR}/wildlife_detection_geolocation_plugin/)
